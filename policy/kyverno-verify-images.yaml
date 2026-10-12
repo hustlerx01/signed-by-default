@@ -1,0 +1,36 @@
+# Admission control: only run images from my GHCR namespace that were keyless-signed by my release workflow
+# and carry an SPDX SBOM attestation from the same identity.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-signed-by-default
+  annotations:
+    policies.kyverno.io/title: Require keyless cosign signature + SBOM attestation
+spec:
+  validationFailureAction: Enforce
+  webhookTimeoutSeconds: 30
+  background: false
+  rules:
+    - name: verify-signature-and-sbom
+      match:
+        any:
+          - resources: {kinds: [Pod]}
+      verifyImages:
+        - imageReferences: ["ghcr.io/ansarshaikh/*"]
+          mutateDigest: true
+          verifyDigest: true
+          required: true
+          attestors:
+            - entries:
+                - keyless:
+                    issuer: https://token.actions.githubusercontent.com
+                    subjectRegExp: "^https://github.com/ansarshaikh/signed-by-default/.github/workflows/release.yml@refs/tags/v.*$"
+                    rekor: {url: https://rekor.sigstore.dev}
+          attestations:
+            - type: https://spdx.dev/Document
+              attestors:
+                - entries:
+                    - keyless:
+                        issuer: https://token.actions.githubusercontent.com
+                        subjectRegExp: "^https://github.com/ansarshaikh/signed-by-default/.github/workflows/release.yml@refs/tags/v.*$"
+                        rekor: {url: https://rekor.sigstore.dev}
