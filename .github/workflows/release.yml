@@ -1,0 +1,71 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+permissions: {contents: read}
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/signed-by-default
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write          # OIDC token for keyless cosign (Fulcio cert) + Rekor
+    outputs:
+      image: ${{ env.IMAGE }}
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version: "1.22"}
+      - run: cd app && go test ./...
+      - uses: ko-build/setup-ko@v0.8
+      - uses: sigstore/cosign-installer@v3
+      - uses: anchore/sbom-action/download-syft@v0
+      - name: Build and push (digest-pinned)
+        id: build
+        env: {KO_DOCKER_REPO: "${{ env.IMAGE }}"}
+        run: |
+          ref=$(cd app && ko build --bare --sbom=none --tags "${GITHUB_REF_NAME}" .)
+          echo "digest=${ref#*@}" >> "$GITHUB_OUTPUT"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+      - name: SBOM
+        run: syft scan "registry:${{ steps.build.outputs.ref }}" -o spdx-json=sbom.spdx.json
+      - name: Keyless sign + attest SBOM
+        run: |
+          cosign sign --yes "${{ steps.build.outputs.ref }}"
+          cosign attest --yes --type spdxjson --predicate sbom.spdx.json "${{ steps.build.outputs.ref }}"
+      - name: Verify keyless identity (fail closed)
+        run: |
+          cosign verify "${{ steps.build.outputs.ref }}" \
+            --certificate-identity-regexp "^https://github.com/${{ github.repository }}/.github/workflows/release.yml@refs/tags/v.*$" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com
+      - uses: actions/upload-artifact@v4
+        with: {name: sbom, path: sbom.spdx.json}
+
+  provenance:
+    needs: build
+    permissions:
+      actions: read
+      id-token: write
+      packages: write
+    # SLSA Build L3 provenance from the isolated reusable workflow. Must be referenced by tag, not SHA.
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0
+    with:
+      image: ${{ needs.build.outputs.image }}
+      digest: ${{ needs.build.outputs.digest }}
+      registry-username: ${{ github.actor }}
+    secrets:
+      registry-password: ${{ secrets.GITHUB_TOKEN }}
+
+  verify-provenance:
+    needs: [build, provenance]
+    runs-on: ubuntu-latest
+    permissions: {contents: read, packages: read}
+    steps:
+      - uses: slsa-framework/slsa-verifier/actions/installer@v2.7.1
+      - run: |
+          slsa-verifier verify-image "${{ needs.build.outputs.image }}@${{ needs.build.outputs.digest }}" \
+            --source-uri "github.com/${{ github.repository }}" --source-tag "${GITHUB_REF_NAME}"
