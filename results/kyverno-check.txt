@@ -1,0 +1,5 @@
+# out-of-scope image (expect: no rule applied)
+pass: 0, fail: 0, warn: 0, error: 0, skip: 0 
+# in-scope unsigned image (expect: fail)
+pass: 0, fail: 2, warn: 0, error: 1, skip: 0 
+unsigned image denied: OK

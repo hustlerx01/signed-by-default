@@ -1,0 +1,46 @@
+== build+push with ko (base: cgr.dev/chainguard/static via ko default)
+2026/10/11 15:44:40 Using base cgr.dev/chainguard/static:latest@sha256:fe55470f22d3259488d9d3739168d8f04da67755f0b69382bc26eda4a7d3d327 for github.com/ansarshaikh/signed-by-default/app
+2026/10/11 15:44:41 current folder is not a git repository. Git info will not be available
+2026/10/11 15:44:41 Building github.com/ansarshaikh/signed-by-default/app for linux/amd64
+2026/10/11 15:44:49 Publishing localhost:5055/app:latest
+2026/10/11 15:44:49 pushed blob: sha256:dccd37f4e006b7e85ab10e2596ee7d76c8508e52c930fe0abde013c62c863a36
+2026/10/11 15:44:49 pushed blob: sha256:250c06f7c38e52dc77e5c7586c3e40280dc7ff9bb9007c396e06d96736cf8542
+2026/10/11 15:44:50 pushed blob: sha256:4cb1b1291eab13fff48ec8af1621094636ffdcc54aebd995298f327b106161be
+2026/10/11 15:44:50 pushed blob: sha256:bb8fa58ec978821768266f0c728f5deffbceba0afcd8f819e906150f6ff268f1
+2026/10/11 15:44:50 localhost:5055/app:latest: digest: sha256:f04324efd973032275a7d2bd7347176465e2daa4f95d2586450a61cd23d249c1 size: 1416
+2026/10/11 15:44:50 Published localhost:5055/app@sha256:f04324efd973032275a7d2bd7347176465e2daa4f95d2586450a61cd23d249c1
+localhost:5055/app@sha256:f04324efd973032275a7d2bd7347176465e2daa4f95d2586450a61cd23d249c1
+== SBOM with syft (SPDX JSON)
+packages: 6
+== key pair (lab only; CI uses keyless OIDC)
+== sign image
+Flag --tlog-upload has been deprecated, prefer using a --signing-config file with no transparency log services
+Signing artifact...
+Pushing signature to: localhost:5055/app
+== attest SBOM
+Flag --tlog-upload has been deprecated, prefer using a --signing-config file with no transparency log services
+Using payload from: results/sbom.spdx.json
+Signing artifact...
+== verify signature
+WARNING: Skipping tlog verification is an insecure practice that lacks transparency and auditability verification for the signature.
+
+Verification for localhost:5055/app@sha256:f04324efd973032275a7d2bd7347176465e2daa4f95d2586450a61cd23d249c1 --
+The following checks were performed on each of these signatures:
+  - The cosign claims were validated
+  - Existence of the claims in the transparency log was verified offline
+  - The signatures were verified against the specified public key
+signature OK
+== verify SBOM attestation
+WARNING: Skipping tlog verification is an insecure practice that lacks transparency and auditability verification for the attestation.
+
+Verification for localhost:5055/app@sha256:f04324efd973032275a7d2bd7347176465e2daa4f95d2586450a61cd23d249c1 --
+The following checks were performed on each of these signatures:
+  - The cosign claims were validated
+  - Existence of the claims in the transparency log was verified offline
+  - The signatures were verified against the specified public key
+attestation OK
+== NEGATIVE: wrong key must fail
+wrong key rejected: OK
+== NEGATIVE: unsigned image (re-push under new digest) must fail
+tampered digest sha256:b770ca40b46b9b0ecb46f338423c39f0eeac9ad22ad02af4ca5ecc25c443b7e2 rejected: OK
+ALL E2E CHECKS PASSED

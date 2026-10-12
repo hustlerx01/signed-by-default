@@ -1,0 +1,26 @@
+[
+    {
+        "critical": {
+            "identity": {
+                "docker-reference": "localhost:5055/app@sha256:f04324efd973032275a7d2bd7347176465e2daa4f95d2586450a61cd23d249c1"
+            },
+            "image": {
+                "docker-manifest-digest": "sha256:f04324efd973032275a7d2bd7347176465e2daa4f95d2586450a61cd23d249c1"
+            },
+            "type": "https://sigstore.dev/cosign/sign/v1"
+        },
+        "optional": {}
+    },
+    {
+        "critical": {
+            "identity": {
+                "docker-reference": "localhost:5055/app@sha256:f04324efd973032275a7d2bd7347176465e2daa4f95d2586450a61cd23d249c1"
+            },
+            "image": {
+                "docker-manifest-digest": "sha256:f04324efd973032275a7d2bd7347176465e2daa4f95d2586450a61cd23d249c1"
+            },
+            "type": "https://spdx.dev/Document"
+        },
+        "optional": {}
+    }
+]
